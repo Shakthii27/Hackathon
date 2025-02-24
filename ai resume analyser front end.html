@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #e3f2fd;
+            padding: 50px;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            max-width: 600px;
+        }
+        input {
+            margin: 10px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            text-align: left;
+            font-size: 1em;
+            margin-top: 10px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            display: none;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📄 AI Resume Analyzer</h2>
+        <input type="file" id="resumeUpload" accept=".pdf">
+        <button onclick="uploadResume()">Analyze Resume</button>
+        <p id="selectedFile"></p>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function uploadResume() {
+            let fileInput = document.getElementById("resumeUpload");
+            let resultDiv = document.getElementById("result");
+            let selectedFile = document.getElementById("selectedFile");
+
+            if (!fileInput.files.length) {
+                alert("Please select a resume.");
+                return;
+            }
+
+            let file = fileInput.files[0];
+            selectedFile.innerText = "Selected File: " + file.name;
+
+            let formData = new FormData();
+            formData.append("file", file);
+
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML = "<p>⏳ Analyzing resume, please wait...</p>";
+
+            console.log("📤 Uploading file:", file.name);
+
+            fetch("http://127.0.0.1:5000/analyze_resume", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                console.log("📥 Received response:", response);
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("📊 Analysis result:", data);
+                if (data.analysis) {
+                    resultDiv.innerHTML = `<h3>📊 Resume Analysis:</h3><pre>${data.analysis}</pre>`;
+                } else {
+                    resultDiv.innerHTML = "<p class='error'>❌ Error in analysis. Try again.</p>";
+                }
+            })
+            .catch(error => {
+                console.error("❌ Fetch error:", error);
+                resultDiv.innerHTML = `<p class='error'>❌ Connection Error: ${error.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
